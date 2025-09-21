@@ -14,6 +14,7 @@ export default function HeaderNav() {
           <a href="/Task-Calendar" className="text-gray-700 dark:text-white">Task Calendar</a>
           <a href="/ProductivityInsights" className="hover:underline me-4 md:me-6">Chart View Tasks</a>
           <a href="/GoalTracker" className="hover:underline me-4 md:me-6">Goal Tracker</a>
+          <a href="/EmailReminder" className="hover:underline me-4 md:me-6">Email Reminders</a>
           <LogoutButton />
         </>
       ) : (

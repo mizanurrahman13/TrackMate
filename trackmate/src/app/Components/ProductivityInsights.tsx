@@ -91,7 +91,7 @@ export default function ProductivityInsights() {
                     }}
                     options={{
                         responsive: true,
-                        radius: "70%",
+                        radius: "60%",
                     }}
                 />
             </div>
