@@ -38,6 +38,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import clientPromise from "../../../src/app/Shared/mongodb";
 import { z } from "zod";
 
+// ✅ Zod schema: both startedAt and endAt are required and validated
 const TaskSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
@@ -45,18 +46,21 @@ const TaskSchema = z.object({
   priority: z.enum(["High", "Medium", "Low"], "Invalid priority"),
   status: z.enum(["Yet to start", "In Progress", "Completed"], "Invalid status"),
 
-  startedAt: z.preprocess((val) => {
-    const parsed = new Date(val as string);
-    return isNaN(parsed.getTime()) ? undefined : parsed;
-  }, z.date({ error: "Invalid or missing startedAt date" })),
-
-  endAt: z.preprocess((val) => {
-    const parsed = new Date(val as string);
-    return isNaN(parsed.getTime()) ? undefined : parsed;
-  }, z.date({ error: "Invalid or missing endAt date" })),
+  startedAt: z.union([
+    z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format for startedAt",
+    }),
+    z.null(),
+  ]),
+  
+  endAt: z.union([
+    z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format for endAt",
+    }),
+    z.null(),
+  ]),
+  
 });
-
-
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -66,24 +70,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const parseResult = TaskSchema.safeParse(req.body);
   if (!parseResult.success) {
     console.error("Zod validation error:", parseResult.error);
-    return res.status(400).json({ message: "Invalid task data", errors: parseResult.error.format() });
+    return res.status(400).json({
+      message: "Invalid task data",
+      errors: parseResult.error.format(),
+    });
   }
-  
-  const { name, description, category, priority, status, startedAt, endAt } = parseResult.data;
 
   try {
     const client = await clientPromise;
     const db = client.db("taskdb");
-    const result = await db.collection("tasks").insertOne({
+
+    const { name, description, category, priority, status, startedAt, endAt } = parseResult.data;
+
+    const taskData = {
       name,
       description,
       category,
       priority,
       status,
-      startedAt,
-      endAt,
+      startedAt: startedAt ? new Date(startedAt) : null,
+      endAt: endAt ? new Date(endAt) : null,
       createdAt: new Date(),
-    });
+    };
+
+    const result = await db.collection("tasks").insertOne(taskData);
 
     res.status(201).json({ message: "Task created", taskId: result.insertedId });
   } catch (error) {
@@ -91,4 +101,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
 

@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useAuth } from "./AuthContext"; // adjust path
+
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const router = useRouter();
+  const { login } = useAuth(); // get login function from context
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +28,9 @@ const handleLogin = async () => {
   if (res.ok) {
     const data = await res.json();
     localStorage.setItem("token", data.token); // optional
-    router.push("/task-list"); // ✅ redirect to task list page
+    login();               // ✅ update global login state
+    router.push("/task-list");
+    router.refresh();      // ✅ reload layout and nav
   } else {
     alert("Invalid credentials");
   }

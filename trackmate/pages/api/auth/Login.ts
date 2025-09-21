@@ -30,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const token = jwt.sign({ email }, SECRET, { expiresIn: '30d' });
+
     console.log("OKay");
     res.status(200).json({ token });
   } catch (error) {

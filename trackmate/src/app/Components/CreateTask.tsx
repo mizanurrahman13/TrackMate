@@ -84,63 +84,59 @@ export default function CreateTaskForm() {
 // }; 
   
 const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    if (name.length > 100 || description.length > 300) {
-      alert("Name or description exceeds character limit.");
-      return;
-    }
-  
-    const newTask = {
-      //id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      name,
-      description,
-      category,
-      priority,
-      status,
-      startedAt,
-      endAt
-    };
-  
-    try {
-      const res = await fetch("/api/tasks/CreateTask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Write report",
-          description: "Finish quarterly summary",
-          category: "Work",
-          priority: "High",
-          status: "Yet to start",
-          startedAt: new Date().toISOString(),
-          endAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour later
-        }),
-      });
-      
-  
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create task");
-      }
-  
-      alert("Task created and saved to database!");
-  
-      // Reset form
-      setName("");
-      setDescription("");
-      setCategory("Work");
-      setPriority("Medium");
-      setStatus("Yet to start");
-      setStartedAt("");
-      setEndAt("");
-  
-      // Redirect to task list
-      router.push("/task-list");
-    } catch (err) {
-      console.error("Error saving task:", err);
-      alert("Something went wrong.");
-    }
+  e.preventDefault();
+
+  if (name.length > 100 || description.length > 300) {
+    alert("Name or description exceeds character limit.");
+    return;
+  }
+
+  // Validate required fields
+  if (!name || !description || !category || !priority || !status) {
+    alert("Please fill in all required fields.");
+    return;
+  }
+
+  const newTask = {
+    name,
+    description,
+    category,
+    priority,
+    status,
+    startedAt: startedAt ? startedAt : null,
+    endAt: endAt ? endAt : null,
   };
+
+  try {
+    const res = await fetch("/api/tasks/CreateTask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newTask),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Failed to create task");
+    }
+
+    // Reset form
+    setName("");
+    setDescription("");
+    setCategory("Work");
+    setPriority("Medium");
+    setStatus("Yet to start");
+    setStartedAt("");
+    setEndAt("");
+
+    // Redirect to task list
+    router.push("/task-list");
+  } catch (err) {
+    console.error("Error saving task:", err);
+    alert("Something went wrong.");
+  }
+};
+
+
   
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto mt-10 space-y-6">
